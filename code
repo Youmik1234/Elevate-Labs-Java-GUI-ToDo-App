@@ -1,0 +1,108 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+class Task {
+    String text;
+    boolean isDone;
+
+    public Task(String text) {
+        this.text = text;
+        this.isDone = false;
+    }
+
+    public String toString() {
+        return text;
+    }
+}
+
+class TaskRenderer extends JCheckBox implements ListCellRenderer<Task> {
+    @Override
+    public Component getListCellRendererComponent(JList<? extends Task> list, Task value, int index,
+                                                  boolean isSelected, boolean cellHasFocus) {
+        setText(value.text);
+        setSelected(value.isDone);
+        if (value.isDone) {
+            setForeground(Color.GRAY);
+            setFont(getFont().deriveFont(Font.ITALIC));
+        } else {
+            setForeground(Color.BLACK);
+            setFont(getFont().deriveFont(Font.PLAIN));
+        }
+        if (isSelected) setBackground(new Color(220, 240, 255));
+        else setBackground(Color.WHITE);
+        return this;
+    }
+}
+
+public class ToDoApp extends JFrame {
+    private DefaultListModel<Task> taskListModel;
+    private JList<Task> taskList;
+    private JTextField taskField;
+    private JButton addButton, deleteButton, clearButton;
+
+    public ToDoApp() {
+        setTitle("To-Do List with Checkboxes");
+        setSize(450, 450);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        taskListModel = new DefaultListModel<>();
+        taskList = new JList<>(taskListModel);
+        taskList.setCellRenderer(new TaskRenderer());
+        taskList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        taskField = new JTextField();
+        addButton = new JButton("Add Task");
+        deleteButton = new JButton("Delete Task");
+        clearButton = new JButton("Clear All");
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(taskField, BorderLayout.CENTER);
+        topPanel.add(addButton, BorderLayout.EAST);
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.add(deleteButton);
+        bottomPanel.add(clearButton);
+
+        add(topPanel, BorderLayout.NORTH);
+        add(new JScrollPane(taskList), BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        // Add Task
+        addButton.addActionListener(e -> {
+            String text = taskField.getText().trim();
+            if (!text.isEmpty()) {
+                taskListModel.addElement(new Task(text));
+                taskField.setText("");
+            }
+        });
+
+        // Delete Task
+        deleteButton.addActionListener(e -> {
+            int selected = taskList.getSelectedIndex();
+            if (selected != -1) {
+                taskListModel.remove(selected);
+            }
+        });
+
+        // Clear All Tasks
+        clearButton.addActionListener(e -> taskListModel.clear());
+
+        // Toggle checkbox on click
+        taskList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                int index = taskList.locationToIndex(e.getPoint());
+                if (index != -1) {
+                    Task task = taskListModel.getElementAt(index);
+                    task.isDone = !task.isDone;
+                    taskList.repaint();
+                }
+            }
+        });
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new ToDoApp().setVisible(true));
+    }
+}
